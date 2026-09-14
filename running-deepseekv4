@@ -1,0 +1,180 @@
+sidhantkhanna@Sidhants-MacBook-Pro dgd_file % kubectl get dgd -n vllm deepseek-v4-flash-agg-h200  -o yaml 
+
+
+
+apiVersion: nvidia.com/v1alpha1
+kind: DynamoGraphDeployment
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"nvidia.com/v1alpha1","kind":"DynamoGraphDeployment","metadata":{"annotations":{},"name":"deepseek-v4-flash-agg-h200","namespace":"vllm"},"spec":{"backendFramework":"vllm","services":{"Frontend":{"componentType":"frontend","envs":[{"name":"DYN_ROUTER_MODE","value":"kv"}],"extraPodSpec":{"mainContainer":{"image":"nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.0","imagePullPolicy":"IfNotPresent"},"nodeSelector":{"nvidia.com/gpu.product":"NVIDIA-H200"}},"replicas":1},"VllmDecodeWorker":{"componentType":"worker","envFromSecret":"hf-token-secret","envs":[{"name":"MODEL_PATH","value":"/data/DeepSeek-V4-Flash-0731"},{"name":"SERVED_MODEL_NAME","value":"deepseek-ai/DeepSeek-V4-Flash-0731"},{"name":"HF_HOME","value":"/tmp/hf"},{"name":"HF_HUB_OFFLINE","value":"1"},{"name":"TRANSFORMERS_OFFLINE","value":"1"},{"name":"HOME","value":"/tmp"},{"name":"HF_MODULES_CACHE","value":"/tmp/hf_modules"},{"name":"XDG_CACHE_HOME","value":"/tmp/cache"},{"name":"TRITON_CACHE_DIR","value":"/tmp/triton"},{"name":"VLLM_CACHE_ROOT","value":"/tmp/vllm"},{"name":"TORCH_EXTENSIONS_DIR","value":"/tmp/torch_extensions"},{"name":"VLLM_SKIP_P2P_CHECK","value":"1"},{"name":"NCCL_CUMEM_ENABLE","value":"1"}],"extraPodSpec":{"mainContainer":{"args":["--model","$(MODEL_PATH)","--served-model-name","$(SERVED_MODEL_NAME)","--kv-cache-dtype","fp8","--block-size","256","--data-parallel-size","4","--tensor-parallel-size","1","--enable-expert-parallel","--max-num-seqs","64","--moe-backend","marlin","--tokenizer-mode","deepseek_v4","--dyn-tool-call-parser","deepseek_v4","--dyn-reasoning-parser","deepseek_v4","--trust-remote-code","--attention-backend","FLASHINFER_MLA","--compilation-config","{\n  \"cudagraph_mode\": \"FULL_AND_PIECEWISE\",\n  \"custom_ops\": [\n    \"all\"\n  ]\n}\n"],"command":["python3","-m","dynamo.vllm"],"image":"nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.0","imagePullPolicy":"IfNotPresent","securityContext":{"capabilities":{"add":["IPC_LOCK","SYS_RESOURCE"]},"runAsGroup":0,"runAsUser":0},"startupProbe":{"failureThreshold":60,"httpGet":{"path":"/live","port":9090},"periodSeconds":60,"timeoutSeconds":20},"volumeMounts":[{"mountPath":"/data","name":"model-cache","readOnly":true},{"mountPath":"/tmp","name":"runtime-tmp"}],"workingDir":"/workspace"},"nodeSelector":{"nvidia.com/gpu.product":"NVIDIA-H200"},"runtimeClassName":"nvidia","terminationGracePeriodSeconds":7200,"volumes":[{"name":"model-cache","persistentVolumeClaim":{"claimName":"vllm-deepseek-v4-flash-storage-claim","readOnly":true}},{"emptyDir":{},"name":"runtime-tmp"}]},"replicas":1,"resources":{"limits":{"gpu":"4"},"requests":{"custom":{"ephemeral-storage":"20Gi"},"gpu":"4","memory":"128Gi"}},"sharedMemory":{"size":"16Gi"}}}}}
+    nvidia.com/dynamo-operator-origin-version: 1.0.2
+  creationTimestamp: "2026-08-21T12:21:46Z"
+  finalizers:
+  - nvidia.com/finalizer
+  generation: 6
+  name: deepseek-v4-flash-agg-h200
+  namespace: vllm
+  resourceVersion: "518613324"
+  uid: d2514eaa-ace7-4b87-8b17-9ad43a8df583
+spec:
+  backendFramework: vllm
+  services:
+    Frontend:
+      componentType: frontend
+      envs:
+      - name: DYN_ROUTER_MODE
+        value: kv
+      extraPodSpec:
+        mainContainer:
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.0
+          imagePullPolicy: IfNotPresent
+          name: ""
+          resources: {}
+        nodeSelector:
+          nvidia.com/gpu.product: NVIDIA-H200
+      replicas: 1
+    VllmDecodeWorker:
+      componentType: worker
+      envFromSecret: hf-token-secret
+      envs:
+      - name: MODEL_PATH
+        value: /data/DeepSeek-V4-Flash-0731
+      - name: SERVED_MODEL_NAME
+        value: deepseek-ai/DeepSeek-V4-Flash-0731
+      - name: HF_HOME
+        value: /tmp/hf
+      - name: HF_HUB_OFFLINE
+        value: "1"
+      - name: TRANSFORMERS_OFFLINE
+        value: "1"
+      - name: HOME
+        value: /tmp
+      - name: HF_MODULES_CACHE
+        value: /tmp/hf_modules
+      - name: XDG_CACHE_HOME
+        value: /tmp/cache
+      - name: TRITON_CACHE_DIR
+        value: /tmp/triton
+      - name: VLLM_CACHE_ROOT
+        value: /tmp/vllm
+      - name: TORCH_EXTENSIONS_DIR
+        value: /tmp/torch_extensions
+      - name: VLLM_SKIP_P2P_CHECK
+        value: "1"
+      - name: NCCL_CUMEM_ENABLE
+        value: "1"
+      extraPodSpec:
+        mainContainer:
+          args:
+          - --model
+          - $(MODEL_PATH)
+          - --served-model-name
+          - $(SERVED_MODEL_NAME)
+          - --kv-cache-dtype
+          - fp8
+          - --block-size
+          - "256"
+          - --data-parallel-size
+          - "4"
+          - --tensor-parallel-size
+          - "1"
+          - --enable-expert-parallel
+          - --max-num-seqs
+          - "64"
+          - --moe-backend
+          - marlin
+          - --tokenizer-mode
+          - deepseek_v4
+          - --dyn-tool-call-parser
+          - deepseek_v4
+          - --dyn-reasoning-parser
+          - deepseek_v4
+          - --trust-remote-code
+          - --attention-backend
+          - FLASHINFER_MLA
+          - --compilation-config
+          - |
+            {
+              "cudagraph_mode": "FULL_AND_PIECEWISE",
+              "custom_ops": [
+                "all"
+              ]
+            }
+          command:
+          - python3
+          - -m
+          - dynamo.vllm
+          image: nvcr.io/nvidia/ai-dynamo/vllm-runtime:1.4.0
+          imagePullPolicy: IfNotPresent
+          name: ""
+          resources: {}
+          securityContext:
+            capabilities:
+              add:
+              - IPC_LOCK
+              - SYS_RESOURCE
+            runAsGroup: 0
+            runAsUser: 0
+          startupProbe:
+            failureThreshold: 60
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 60
+            timeoutSeconds: 20
+          volumeMounts:
+          - mountPath: /data
+            name: model-cache
+            readOnly: true
+          - mountPath: /tmp
+            name: runtime-tmp
+          workingDir: /workspace
+        nodeSelector:
+          nvidia.com/gpu.product: NVIDIA-H200
+        runtimeClassName: nvidia
+        terminationGracePeriodSeconds: 7200
+        volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: vllm-deepseek-v4-flash-storage-claim
+            readOnly: true
+        - emptyDir: {}
+          name: runtime-tmp
+      replicas: 1
+      resources:
+        limits:
+          gpu: "4"
+        requests:
+          custom:
+            ephemeral-storage: 20Gi
+          gpu: "4"
+          memory: 128Gi
+      sharedMemory:
+        size: 16Gi
+status:
+  conditions:
+  - lastTransitionTime: "2026-09-14T14:57:39Z"
+    message: All resources are ready
+    reason: all_resources_are_ready
+    status: "True"
+    type: Ready
+  observedGeneration: 6
+  services:
+    Frontend:
+      componentKind: PodClique
+      componentName: deepseek-v4-flash-agg-h200-0-frontend
+      componentNames:
+      - deepseek-v4-flash-agg-h200-0-frontend
+      readyReplicas: 1
+      replicas: 1
+      updatedReplicas: 1
+    VllmDecodeWorker:
+      componentKind: PodClique
+      componentName: deepseek-v4-flash-agg-h200-0-vllmdecodeworker
+      componentNames:
+      - deepseek-v4-flash-agg-h200-0-vllmdecodeworker
+      readyReplicas: 1
+      replicas: 1
+      updatedReplicas: 1
+  state: successful
