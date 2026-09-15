@@ -1,0 +1,145 @@
+apiVersion: nvidia.com/v1alpha1
+kind: DynamoGraphDeployment
+metadata:
+  name: deepseek-v4-1-flash-agg-h200
+  namespace: vllm
+  labels:
+    app.kubernetes.io/name: deepseek-v4-1-flash-agg-h200
+    engine: vllm
+    hardware: h200
+    mode: agg
+spec:
+  backendFramework: vllm
+  services:
+
+    Frontend:
+      componentType: frontend
+      replicas: 1
+      envs:
+        - name: DYN_ROUTER_MODE
+          value: kv
+      extraPodSpec:
+        nodeSelector:
+          nvidia.com/gpu.product: NVIDIA-H200
+        mainContainer:
+          image: ghcr.io/infinia-technology/dynamo-frontend:v1.4.0
+          imagePullPolicy: IfNotPresent
+
+    VllmDecodeWorker:
+      componentType: worker
+      replicas: 1
+      envFromSecret: hf-token-secret
+      resources:
+        limits:
+          gpu: "8"
+        requests:
+          gpu: "8"
+          cpu: "64"
+          memory: 512Gi
+          custom:
+            ephemeral-storage: 20Gi
+      sharedMemory:
+        size: 16Gi
+      envs:
+        - name: MODEL_PATH
+          value: /data/DeepSeek-V4.1-Flash
+        - name: SERVED_MODEL_NAME
+          value: deepseek-ai/DeepSeek-V4.1-Flash
+        - name: HF_HOME
+          value: /tmp/hf
+        - name: HF_HUB_OFFLINE
+          value: "1"
+        - name: TRANSFORMERS_OFFLINE
+          value: "1"
+        - name: VLLM_ENGINE_READY_TIMEOUT_S
+          value: "3600"
+        - name: VLLM_USE_RUST_FRONTEND
+          value: "1"
+        - name: VLLM_SKIP_P2P_CHECK
+          value: "1"
+        - name: NCCL_CUMEM_ENABLE
+          value: "1"
+        - name: HOME
+          value: /tmp
+        - name: HF_MODULES_CACHE
+          value: /tmp/hf_modules
+        - name: XDG_CACHE_HOME
+          value: /tmp/cache
+        - name: TRITON_CACHE_DIR
+          value: /tmp/triton
+        - name: VLLM_CACHE_ROOT
+          value: /tmp/vllm
+        - name: TORCH_EXTENSIONS_DIR
+          value: /tmp/torch_extensions
+        - name: PROMETHEUS_MULTIPROC_DIR
+          value: /tmp
+      extraPodSpec:
+        runtimeClassName: nvidia
+        nodeSelector:
+          nvidia.com/gpu.product: NVIDIA-H200
+        terminationGracePeriodSeconds: 7200
+        mainContainer:
+          # TBD: pending image discussion — needs an ai-dynamo build on top of
+          # vllm/vllm-openai:deepseekv41-flash-0909 (no stock dynamo image ships this arch).
+          #image: ghcr.io/infinia-technology/dynamo-vllm-runtime:deepseekv41-flash
+          image: kubedrona/dynamo-vllm-runtime:deepseekv41-dynamo
+          imagePullPolicy: IfNotPresent
+          workingDir: /workspace
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            capabilities:
+              add:
+                - IPC_LOCK
+                - SYS_RESOURCE
+          command:
+            - python3
+            - -m
+            - dynamo.vllm
+          args:
+            - --model
+            - $(MODEL_PATH)
+            - --served-model-name
+            - $(SERVED_MODEL_NAME)
+            - --tokenizer-mode
+            - deepseek_v41
+            - --enable-expert-parallel
+            - --data-parallel-size
+            - "1"
+            - --tensor-parallel-size
+            - "8"
+            - --tool-call-parser
+            - deepseek_v41
+            - --enable-auto-tool-choice
+            - --reasoning-parser
+            - deepseek_v41
+            - --dyn-reasoning-parser
+            - deepseek_v41
+            - --dyn-tool-call-parser
+            - deepseek_v41
+            - --mm-encoder-tp-mode
+            - data
+            - --speculative-config
+            - '{"method":"dspark","num_speculative_tokens":5,"draft_sample_method":"probabilistic","rejection_sample_method":"block","enable_adaptive_verification":true}'
+            - --model-loader-extra-config
+            - '{"enable_multithread_load": true, "num_threads": 96}'
+          startupProbe:
+            httpGet:
+              path: /live
+              port: 9090
+            periodSeconds: 60
+            timeoutSeconds: 20
+            failureThreshold: 90
+          volumeMounts:
+            - name: deepseek-v41-models
+              mountPath: /data
+              readOnly: true
+            - name: runtime-tmp
+              mountPath: /tmp
+        volumes:
+          - name: deepseek-v41-models
+            persistentVolumeClaim:
+              claimName: deepseek-v41-models
+              readOnly: true
+          - name: runtime-tmp
+            emptyDir: {}
