@@ -19,6 +19,8 @@ spec:
         - name: DYN_ROUTER_MODE
           value: kv
       extraPodSpec:
+        imagePullSecrets:
+          - name: ghcr-creds-v41test
         nodeSelector:
           nvidia.com/gpu.product: NVIDIA-H200
         mainContainer:
@@ -74,6 +76,8 @@ spec:
         - name: PROMETHEUS_MULTIPROC_DIR
           value: /tmp
       extraPodSpec:
+        imagePullSecrets:
+          - name: ghcr-creds-v41test
         runtimeClassName: nvidia
         nodeSelector:
           nvidia.com/gpu.product: NVIDIA-H200
