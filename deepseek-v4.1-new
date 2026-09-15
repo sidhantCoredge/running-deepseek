@@ -81,8 +81,8 @@ spec:
         mainContainer:
           # TBD: pending image discussion — needs an ai-dynamo build on top of
           # vllm/vllm-openai:deepseekv41-flash-0909 (no stock dynamo image ships this arch).
-          #image: ghcr.io/infinia-technology/dynamo-vllm-runtime:deepseekv41-flash
-          image: kubedrona/dynamo-vllm-runtime:deepseekv41-dynamo
+          image: ghcr.io/infinia-technology/dynamo-vllm-runtime:deepseekv41-flash
+          #image: kubedrona/dynamo-vllm-runtime:deepseekv41-dynamo
           imagePullPolicy: IfNotPresent
           workingDir: /workspace
           securityContext:
